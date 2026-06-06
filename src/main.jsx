@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import './styles.css';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+const API = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:4000' : '');
 
 const modules = [
   { id: 'lost', label: 'Lost & Found', icon: PackageSearch },
