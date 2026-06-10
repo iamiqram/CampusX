@@ -139,6 +139,18 @@ function filter(items, query) {
   return items.filter((item) => Object.values(item).join(' ').toLowerCase().includes(needle));
 }
 
+function assetUrl(url) {
+  if (!url) return null;
+  if (url.startsWith('/')) return url;
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname === window.location.hostname) return `${parsed.pathname}${parsed.search}`;
+  } catch {
+    return url;
+  }
+  return url;
+}
+
 async function submitForm(event, endpoint, onChange) {
   event.preventDefault();
   const form = event.currentTarget;
@@ -237,7 +249,7 @@ function Notes({ items, onChange }) {
               <span>{item.exchange_for}</span>
               <span>{item.contact}</span>
             </div>
-            {item.file_url && <a href={item.file_url} target="_blank" rel="noreferrer">Open file</a>}
+            {item.file_url && <a href={assetUrl(item.file_url)} target="_blank" rel="noreferrer">Open file</a>}
           </article>
         ))}
       </List>
@@ -457,7 +469,7 @@ function Meta({ icon: Icon, children }) {
 }
 
 function Media({ src, label }) {
-  return src ? <img className="media" src={src} alt={label} /> : <div className="media placeholder"><PackageSearch size={28} /></div>;
+  return src ? <img className="media" src={assetUrl(src)} alt={label} /> : <div className="media placeholder"><PackageSearch size={28} /></div>;
 }
 
 createRoot(document.getElementById('root')).render(<App />);

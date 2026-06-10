@@ -27,7 +27,7 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use('/uploads', express.static(uploadDir));
 
-const publicUrl = (req, file) => (file ? `${req.protocol}://${req.get('host')}/uploads/${file.filename}` : null);
+const publicUrl = (_req, file) => (file ? `/uploads/${file.filename}` : null);
 const required = (body, fields) => fields.filter((field) => !String(body[field] ?? '').trim());
 const asyncRoute = (handler) => (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
 
@@ -167,7 +167,7 @@ app.post('/api/gpa-predictions', asyncRoute(async (req, res) => {
 const distDir = path.resolve('dist');
 if (fs.existsSync(distDir)) {
   app.use(express.static(distDir));
-  app.get(/^(?!\/api).*/, (_req, res) => res.sendFile(path.join(distDir, 'index.html')));
+  app.get(/^(?!\/api|\/uploads).*/, (_req, res) => res.sendFile(path.join(distDir, 'index.html')));
 }
 
 app.use((err, _req, res, _next) => {
