@@ -5,34 +5,31 @@ import multer from 'multer';
 import fs from 'node:fs';
 import path from 'node:path';
 import { databaseName, getById, initDb, insert, list, now, run } from './db.js';
+import { initStorage, saveUpload, storageMode } from './storage.js';
 
 const app = express();
 const port = process.env.PORT || 4000;
 const uploadDir = path.resolve('uploads');
 fs.mkdirSync(uploadDir, { recursive: true });
 
-const storage = multer.diskStorage({
-  destination: uploadDir,
-  filename: (_req, file, cb) => {
-    const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '-');
-    cb(null, `${Date.now()}-${safeName}`);
-  }
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 8 * 1024 * 1024 }
 });
-const upload = multer({ storage, limits: { fileSize: 8 * 1024 * 1024 } });
 
 await initDb();
+await initStorage();
 
 app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 app.use('/uploads', express.static(uploadDir));
 
-const publicUrl = (_req, file) => (file ? `/uploads/${file.filename}` : null);
 const required = (body, fields) => fields.filter((field) => !String(body[field] ?? '').trim());
 const asyncRoute = (handler) => (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
 
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, service: 'CampusX API', database: databaseName });
+  res.json({ ok: true, service: 'CampusX API', database: databaseName, storage: storageMode });
 });
 
 app.get('/api/dashboard', asyncRoute(async (_req, res) => {
@@ -56,7 +53,7 @@ app.post('/api/lost-items', upload.single('photo'), asyncRoute(async (req, res) 
     req.body.location,
     req.body.contact,
     'open',
-    publicUrl(req, req.file),
+    await saveUpload(req.file, 'lost-items'),
     now()
   ]);
   res.status(201).json(row);
@@ -77,7 +74,7 @@ app.post('/api/notes', upload.single('file'), asyncRoute(async (req, res) => {
     req.body.description,
     req.body.exchange_for || 'Open to exchange',
     req.body.contact,
-    publicUrl(req, req.file),
+    await saveUpload(req.file, 'notes'),
     now()
   ]);
   res.status(201).json(row);
@@ -110,7 +107,7 @@ app.post('/api/marketplace', upload.single('photo'), asyncRoute(async (req, res)
     req.body.item_condition,
     req.body.description,
     req.body.contact,
-    publicUrl(req, req.file),
+    await saveUpload(req.file, 'marketplace'),
     now()
   ]);
   res.status(201).json(row);

@@ -61,14 +61,21 @@ When `DATABASE_URL` exists, CampusX automatically creates the PostgreSQL tables 
 
 ### Uploaded photos and PDFs
 
-Database records are stored in PostgreSQL, but uploaded files are stored in the app's `uploads/` folder. On many hosts, the filesystem is temporary unless you attach persistent storage.
+Local uploads are stored in the app's `uploads/` folder. Production uploads can be stored permanently in Supabase Storage by adding these Render environment variables:
 
-For a first public version, attach a persistent disk and mount it at `uploads/`. For a stronger production version, move uploads to Cloudinary, S3, or another object storage provider.
+```bash
+SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SUPABASE_STORAGE_BUCKET=campusx-uploads
+```
+
+`SUPABASE_STORAGE_BUCKET` is optional; if omitted, the app uses `campusx-uploads`. On startup, the server creates the bucket if it does not already exist. The service role key must stay private and must only be used on the backend.
 
 ## Data and uploads
 
 - SQLite database: `data/campusx.sqlite`
-- Uploaded files/photos: `uploads/`
+- Local uploaded files/photos: `uploads/`
+- Production uploaded files/photos: Supabase Storage bucket `campusx-uploads`
 
 Both folders are ignored by Git so local campus data is not accidentally committed.
 
